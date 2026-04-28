@@ -1,56 +1,22 @@
-name: Dependabot Auto Merge
-
-on:
-  workflow_run:
-    workflows:
-      - Build Test
-    types:
-      - completed
+name: Dependabot auto-merge
+on: pull_request
 
 permissions:
-  actions: read
-  contents: write
-  pull-requests: write
+    contents: write
+    pull-requests: write
 
 jobs:
-  approve-and-merge:
-    name: Approve and merge after successful CI
-    if: github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Find Dependabot pull request
-        id: pr
-        run: |
-          PR_NUMBER="$(gh api "repos/${REPO}/actions/runs/${RUN_ID}/pull_requests" --jq '.[0].number // empty')"
-          if [ -z "$PR_NUMBER" ]; then
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          AUTHOR="$(gh pr view "$PR_NUMBER" --repo "$REPO" --json author --jq '.author.login')"
-          if [ "$AUTHOR" != "dependabot[bot]" ]; then
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          PR_URL="$(gh pr view "$PR_NUMBER" --repo "$REPO" --json url --jq '.url')"
-          echo "found=true" >> "$GITHUB_OUTPUT"
-          echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          REPO: "${{ github.repository }}"
-          RUN_ID: "${{ github.event.workflow_run.id }}"
-
-      - name: Approve pull request
-        if: steps.pr.outputs.found == 'true'
-        run: gh pr review "$PR_URL" --approve --body "Automatically approved after Build Test passed."
-        env:
-          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          PR_URL: "${{ steps.pr.outputs.url }}"
-
-      - name: Merge pull request
-        if: steps.pr.outputs.found == 'true'
-        run: gh pr merge "$PR_URL" --merge --delete-branch
-        env:
-          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          PR_URL: "${{ steps.pr.outputs.url }}"
+    dependabot:
+        runs-on: ubuntu-latest
+        if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'TSStudio/blog.tmysam.top'
+        steps:
+            - name: Dependabot metadata
+              id: metadata
+              uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7
+              with:
+                  github-token: "${{ secrets.GITHUB_TOKEN }}"
+            - name: Enable auto-merge for Dependabot PRs
+              run: gh pr merge --auto --merge "$PR_URL"
+              env:
+                  PR_URL: ${{github.event.pull_request.html_url}}
+                  GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
