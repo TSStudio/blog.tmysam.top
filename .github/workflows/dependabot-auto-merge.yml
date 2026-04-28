@@ -1,0 +1,46 @@
+name: Dependabot Auto Merge
+
+on:
+  workflow_run:
+    workflows:
+      - Build Test
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  approve-and-merge:
+    name: Approve and merge after successful CI
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find Dependabot pull request
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pulls = context.payload.workflow_run.pull_requests || [];
+            const dependabotPr = pulls.find((pr) => pr.user.login === "dependabot[bot]");
+            if (!dependabotPr) {
+              core.setOutput("found", "false");
+              return;
+            }
+            core.setOutput("found", "true");
+            core.setOutput("url", dependabotPr.html_url);
+
+      - name: Approve pull request
+        if: steps.pr.outputs.found == 'true'
+        run: gh pr review "$PR_URL" --approve --body "Automatically approved after Build Test passed."
+        env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          PR_URL: "${{ steps.pr.outputs.url }}"
+
+      - name: Merge pull request
+        if: steps.pr.outputs.found == 'true'
+        run: gh pr merge "$PR_URL" --merge --delete-branch
+        env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          PR_URL: "${{ steps.pr.outputs.url }}"
