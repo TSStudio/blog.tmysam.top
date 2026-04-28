@@ -48,13 +48,13 @@
           <span>隐藏文章（不出现在文章列表中）</span>
         </label>
 
-        <label class="field">
+        <div class="field">
           <span>Markdown 内容</span>
           <MarkdownEditor
             v-model="content"
             placeholder="# 标题&#10;&#10;在这里开始写作..."
           />
-        </label>
+        </div>
 
         <div class="toolbar">
           <p class="feedback" :class="{ error: saveMessageIsError }">{{ saveMessage || helperText }}</p>

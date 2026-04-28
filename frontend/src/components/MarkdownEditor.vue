@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 
 const props = defineProps<{
   modelValue: string;
@@ -37,9 +37,19 @@ const emit = defineEmits<{
 
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
 
+function resizeTextarea() {
+  const textarea = textareaRef.value;
+  if (!textarea) {
+    return;
+  }
+  textarea.style.height = "0px";
+  textarea.style.height = `${Math.max(textarea.scrollHeight, 420)}px`;
+}
+
 function handleInput(event: Event) {
   const target = event.target as HTMLTextAreaElement;
   emit("update:modelValue", target.value);
+  resizeTextarea();
 }
 
 function updateValue(nextValue: string, selectionStart: number, selectionEnd = selectionStart) {
@@ -49,6 +59,7 @@ function updateValue(nextValue: string, selectionStart: number, selectionEnd = s
     if (!textarea) {
       return;
     }
+    resizeTextarea();
     textarea.focus();
     textarea.setSelectionRange(selectionStart, selectionEnd);
   });
@@ -159,4 +170,16 @@ const actions = computed(() => [
     run: () => insertBlock("```ts\nconst message = 'hello';\n```"),
   },
 ]);
+
+watch(
+  () => props.modelValue,
+  async () => {
+    await nextTick();
+    resizeTextarea();
+  },
+);
+
+onMounted(() => {
+  resizeTextarea();
+});
 </script>
