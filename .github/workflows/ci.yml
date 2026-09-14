@@ -54,3 +54,11 @@ jobs:
 
       - name: Compile backend
         run: python -m compileall backend/app
+
+  auto-merge:
+    needs: [frontend, backend]
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'TSStudio/blog.tmysam.top'
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: ./.github/workflows/dependabot-auto-merge.yml

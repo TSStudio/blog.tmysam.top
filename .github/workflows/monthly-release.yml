@@ -36,7 +36,7 @@ jobs:
         working-directory: frontend
         run: |
           npm install -g npm-check-updates
-          ncu -u
+          ncu -u --reject typescript
           npm install
 
       - name: Update backend dependencies

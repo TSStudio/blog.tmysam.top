@@ -1,5 +1,6 @@
 name: Dependabot auto-merge
-on: pull_request
+on:
+    workflow_call:
 
 permissions:
     contents: write
@@ -8,15 +9,11 @@ permissions:
 jobs:
     dependabot:
         runs-on: ubuntu-latest
-        if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'TSStudio/blog.tmysam.top'
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'TSStudio/blog.tmysam.top' && github.event.pull_request.head.repo.full_name == github.repository
         steps:
-            - name: Dependabot metadata
-              id: metadata
-              uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98
-              with:
-                  github-token: "${{ secrets.GITHUB_TOKEN }}"
-            - name: Enable auto-merge for Dependabot PRs
-              run: gh pr merge --auto --merge "$PR_URL"
+            - name: Merge tested Dependabot commit
+              run: gh pr merge --merge --match-head-commit "$PR_SHA" "$PR_URL"
               env:
                   PR_URL: ${{github.event.pull_request.html_url}}
+                  PR_SHA: ${{github.event.pull_request.head.sha}}
                   GH_TOKEN: ${{secrets.GITHUB_TOKEN}}

@@ -49,7 +49,7 @@ VITE_API_BASE=http://localhost:8000/api/v1 npm run dev
 
 - Dependabot 每周一检查 npm、pip 和 GitHub Actions 依赖
 - `Build Test` 会在 PR 和 main/master push 时构建前端并检查后端 Python 语法
-- Dependabot PR 在 `Build Test` 成功后会自动 approve 并 merge
+- Dependabot PR 由 CI 的 `auto-merge` job 合并，通过 `needs: [frontend, backend]` 等待两个检查成功；合并时校验 PR head SHA，避免合并未测试的新提交
 - 每月 1 日执行依赖滚动更新；如果 npm 或 pip 依赖有变化，会 bump 版本、构建测试、打 tag 并创建 GitHub Release
 
 版本号格式为 `年.构建次数`，例如 `2026.1`。构建次数按当年已有 `v年.*` tag 递增。
@@ -58,4 +58,6 @@ VITE_API_BASE=http://localhost:8000/api/v1 npm run dev
 
 - `Settings -> Actions -> General -> Workflow permissions` 选择 `Read and write permissions`
 - 允许 GitHub Actions 创建和批准 pull request
-- 如果启用了分支保护，确保 `Build Test` 是必需检查项
+- 如果启用了分支保护，将 `Frontend build` 和 `Backend syntax check` 设为必需检查项。`gh pr merge --auto` 本身不会等待非必需检查
+
+当前 TypeScript 固定为 `6.0.3`：线上 `vue-tsc@3.3.11` 使用的 `typescript/lib/tsc` 在 TypeScript 7 中不再导出。Dependabot 暂停 TypeScript 主版本升级，月度更新跳过 TypeScript，待验证兼容性后再升级。

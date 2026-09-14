@@ -8,6 +8,10 @@ updates:
       time: "09:00"
       timezone: "Asia/Shanghai"
     open-pull-requests-limit: 10
+    ignore:
+      # vue-tsc still loads TypeScript's JavaScript compiler internals.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     groups:
       frontend-dependencies:
         patterns:
